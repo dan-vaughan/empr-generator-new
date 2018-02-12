@@ -1,6 +1,5 @@
 #include "lpc_types.h"
 
-#include "i2c.h"
 #include "pindef.h"
 #include "utilities.h"
 

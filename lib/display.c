@@ -1,4 +1,3 @@
-#include "i2c.h"
 #include "utilities.h"
 
 #include "lpc_types.h"

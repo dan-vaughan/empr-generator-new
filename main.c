@@ -4,7 +4,6 @@
 
 Serial pc;
 DMX dmx;
-packet_manager packets;
 
 char red[5] = {0x00, 0xff, 0x00, 0x00, 0x00};
 char green[5] = {0x00, 0x00, 0xff, 0x00, 0x00};
@@ -95,7 +94,6 @@ void action(int button)
 			if (limit == 2) {
 				int choice = atoi(input);
 				pc.printf("Input is: %d\n\r", choice);
-
 			}
 
 		}
