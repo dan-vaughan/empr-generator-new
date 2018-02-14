@@ -4,11 +4,14 @@
 
 Serial pc;
 DMX dmx;
+packet_manager packets;
 
-char red[5] = {0x00, 0xff, 0x00, 0x00, 0x00};
+int manager = 1;
+
+char red[5] = {0x00, 0xff, 0x00, 0x10, 0x00};
 char green[5] = {0x00, 0x00, 0xff, 0x00, 0x00};
-char blue[5] = {0x00, 0x00, 0x00, 0xff, 0x00};
-char full[5] = {0x00, 0xff, 0xff, 0xff, 0x00};
+char blue[5] = {0x00, 0x00, 0x00, 0xf0, 0x00};
+char full[7] = {0x00, 0xff, 0xaa, 0xbb, 0xef, 0x00, 0x00};
 char empty[5] = {0x00, 0x00, 0x00, 0x00, 0x00};
 
 char labels[16] = {'1', '2', '3', 'A', '4', '5', '6', 'B', '7', '8', '9', 'C', '*', '0', '#', 'D'};
@@ -33,21 +36,21 @@ void menu(int screen)
 	if (screen == 0) {
 		printstr("1-Test Sequence");
 		shift_line();
-		printstr("2-Editor   B");
+		printstr("2-Editor      B");
 		putcustom(0x20);
 	}
-	if (screen == 1) {
+	else if (screen == 1) {
 		printstr("3-Send Packet");
 		shift_line();
-		printstr("4-Sequence C");
-
+		printstr("4-Full white  C");
+		putcustom(0x20);
 	}
-	if (screen == 2) {
+	else if (screen == 2) {
 		printstr("--- Screen C ---");
 		shift_line();
 		printstr("Not implemented");
 	}
-	if (screen == 3) {
+	else if (screen == 3) {
 		printstr("--- Screen D ---");
 		shift_line();
 		printstr("Not implemented");
@@ -55,25 +58,108 @@ void menu(int screen)
 
 }
 
-void editor()
+void selector(int screen)
 {
+	if (screen == 0) {
+		clear_display();
+		return_home();
+		printstr("Choose a Packet");
+		shift_line();
+		printstr("(0-99): ");
+	}
+}
+
+void editor(int packet_number, int slot)
+{
+	char msg[18];
+	char val[3];
+
+	sprintf(msg, "Slot %d:  C", slot);
+
 	clear_display();
 	return_home();
-	printstr("Choose a Packet");
+	printstr(msg);
+
+	putcustom(0xaa);
+	printstr(" D");
+	putcustom(0x12);
+
 	shift_line();
-	printstr("(0-99): ");
+
+	if (slot > 1) {
+		putcustom(0x10);
+		printchar('A');
+	}
+	else printstr("  ");
+	printstr("            ");
+
+	if (slot < PLEN-1) {
+		printchar('B');
+		putcustom(0x20);
+		cursor_shift(LEFT, 9);
+	}
+	else {
+		cursor_shift(LEFT, 7);	//A lesser shift is needed as "B" not printed
+	}
+
+	char * num = packets.getptr(packet_number);
+
+	sprintf(val, "%d", *(num+slot));
+	printstr(val);
+
+	int len = strlen(val);
+	cursor_shift(LEFT, len);	//Shift back so numbers can be entered
+}
+
+void error(int screen)
+{
+	if (screen == 0) {
+		clear_display();
+		return_home();
+		printstr("Not enough");
+		shift_line();
+		printstr("memory   (ABCD)");
+		putcustom(0x20);
+	}
+	else if (screen == 1) {
+		clear_display();
+		return_home();
+		printstr("Invalid packet!");
+		shift_line();
+		char msg[18];
+		sprintf(msg, "Max=%d   (ABCD)", PMAX-1);
+		printstr(msg);
+		putcustom(0x20);
+	}
+	else if (screen == 2) {
+		clear_display();
+		return_home();
+		printstr("Value too large!");
+		shift_line();
+		printstr("         (ABCD)");
+		putcustom(0x20);
+	}
 
 }
 
 void action(int button)
 {
 	static int mode = 0;	//Menu mode, defualt
+	static int choice = 0;	//Used to track packet being edited
 
 	if (mode == 0) {
 		if (button == 0) sequence(TIME);				//Option 1 - Test Sequence
-		else if (button == 1) {mode = 1; editor();}	//Option 2 - Editor
+
+		else if (button == 1) { 					//Option 2 - selector
+			if (manager == 1) {	//If sufficient memory, enter selector
+				mode = 1;
+				selector(0);
+			}
+			else error(0);		//Else, give error message
+		}
+
 		else if (button == 2);												//Option 3 - Send Packet
-		else if (button == 4);												//Option 4 - sequence
+		else if (button == 4);						//Option 4 - Sequence
 
 		else if (button == 3) menu(0);					//Button A - Screen 0
 		else if (button == 7) menu(1);					//Button B - Screen 1
@@ -81,7 +167,7 @@ void action(int button)
 		else if (button == 15) menu(3);				//Button D - Screen 3
 	}
 
-	else if (mode == 1) {
+	else if (mode == 1) {	//Packet selection mode
 		static int limit = 0;
 		static char input[3] = {0x00, 0x00, 0x00};
 
@@ -92,11 +178,42 @@ void action(int button)
 			limit++;
 
 			if (limit == 2) {
-				int choice = atoi(input);
-				pc.printf("Input is: %d\n\r", choice);
+				choice = atoi(input);
+				limit = 0;
+				if (choice < PMAX) { mode = 2; editor(choice, 1); }	//Check if packet number exists
+				else { mode = 0; error(1); }	//Give error message
 			}
 
 		}
+	}
+	else if (mode == 2) { //Editor mode
+		static int index = 0;	//Equivelent to "limit" above
+		static char edit_input[4] = {0x00, 0x00, 0x00, 0x00};
+		static int slot = 1;
+
+		if ( ( (0 <= button && button < 3) || (4 <= button && button < 7) || (8 <= button && button < 11) || button == 13) && index < 3 )
+		{
+			printchar(labels[button]);
+			edit_input[index] = labels[button];
+			index++;
+
+			if (index == 3) {
+				int value = atoi(edit_input);
+				if (value > 255) { slot = 1; mode = 0; error(2); }
+				else {	//Value is safe
+					char * ptr = packets.getptr(choice)+slot;
+					*ptr = value;
+					editor(choice, slot);
+				}
+				index = 0;
+			}
+
+		}
+		else if (button == 3 && slot > 0) editor(choice, --slot);					//If A pressed, move left 1
+		else if (button == 7 && slot < PLEN -1)	editor(choice, ++slot);		//If B pressed, move right 1
+		else if (button == 11) dmx.send( packets.getptr(choice) , PLEN ); //If C pressed, send packet being edited
+		else if (button == 15) { slot = 0; mode = 0; menu(0); }						//If D pressed, exit to main menu
+
 	}
 
 
@@ -104,6 +221,13 @@ void action(int button)
 
 int main ()
 {
+	try {
+		packets.init();
+	}
+	catch (const char * msg) {
+		manager = 0;
+	}
+
 	dmx.send(empty, 5);
 
 	setup_display();
