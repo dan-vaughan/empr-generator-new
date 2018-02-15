@@ -3,6 +3,7 @@
 #include "lib/utilities.h"
 #include "lib/keypad.h"
 #include "lib/display.h"
+#include "lib/analog.h"
 #include "packet-manager.h"
 
 #include <stdlib.h>

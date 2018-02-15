@@ -8,15 +8,15 @@
 #define CHANNEL ADC_CHANNEL_4
 
 // CONSTRUCTOR
-AnalogIn::AnalogIn(PINSEL_CFG_Type in)
+AnalogIn::AnalogIn()
 {
-	pinconf(in);
+	pinconf(ADC);
 	init();
 }
 
-AnalogOut::AnalogOut(PINSEL_CFG_Type out)
+AnalogOut::AnalogOut()
 {
-	pinconf(out);
+	pinconf(DAC);
 	init();
 }
 
@@ -40,12 +40,10 @@ uint16_t AnalogIn::read()
 
 	while (!(ADC_ChannelGetStatus(LPC_ADC, CHANNEL, ADC_DATA_DONE)));
 	return ADC_ChannelGetData(LPC_ADC, CHANNEL);
-	
+
 }
 
 void AnalogOut::write(uint32_t value)
 {
 	DAC_UpdateValue(LPC_DAC, value);
 }
-
-

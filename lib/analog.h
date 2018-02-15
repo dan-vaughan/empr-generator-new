@@ -5,7 +5,7 @@ class AnalogIn
 	protected:
 		void init(void);
 	public:
-		AnalogIn(PINSEL_CFG_Type in);
+		AnalogIn();
 		uint16_t read(void);
 };
 
@@ -14,7 +14,6 @@ class AnalogOut
 	protected:
 		void init(void);
 	public:
-		AnalogOut(PINSEL_CFG_Type out);
+		AnalogOut();
 		void write(uint32_t);
 };
-

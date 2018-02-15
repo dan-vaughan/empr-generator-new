@@ -10,6 +10,9 @@
 	PINSEL_CFG_Type SDA = {0, 0, 3, 0, 0};
 	PINSEL_CFG_Type SCL = {0, 1, 3, 0, 0};
 
+	PINSEL_CFG_Type ADC = {1, 30, 3, 0, 0};	
+	PINSEL_CFG_Type DAC = {0, 26, 2, 0, 0};
+
 void pinconf(PINSEL_CFG_Type PinCfg)
 {
 	PINSEL_ConfigPin(&PinCfg);

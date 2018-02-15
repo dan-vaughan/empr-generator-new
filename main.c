@@ -5,6 +5,7 @@
 Serial pc;
 DMX dmx;
 packet_manager packets;
+AnalogIn ain;
 
 int manager = 1;
 
@@ -42,13 +43,13 @@ void menu(int screen)
 	else if (screen == 1) {
 		printstr("3-Send Packet");
 		shift_line();
-		printstr("4-Full white  C");
+		printstr("4-Sequence  C");
 		putcustom(0x20);
 	}
 	else if (screen == 2) {
-		printstr("--- Screen C ---");
+		printstr("5-Music Mode");
 		shift_line();
-		printstr("Not implemented");
+		printstr("6-Packet Wizard");
 	}
 	else if (screen == 3) {
 		printstr("--- Screen D ---");
@@ -160,6 +161,8 @@ void action(int button)
 
 		else if (button == 2);												//Option 3 - Send Packet
 		else if (button == 4);						//Option 4 - Sequence
+		else if (button == 5);						//Option 5 - Music Mode
+		else if (button == 6);						//Option 6 - Packet Wizard
 
 		else if (button == 3) menu(0);					//Button A - Screen 0
 		else if (button == 7) menu(1);					//Button B - Screen 1
