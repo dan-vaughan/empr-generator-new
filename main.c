@@ -124,7 +124,7 @@ void editor(int packet_number, int slot)
 }
 
 void sequencer(int sequence_number, int packet_number){
-	
+
 }
 
 void error(int screen)
@@ -220,18 +220,17 @@ void action(int button)
 		}
 
 		else if (button == 4);				//Option 4 -
-		else if (button == 5);				//Option 5 - 
-		else if (button == 6);				//Option 6 - 
-		else if (button == 8);				//Option 7 - 
+		else if (button == 5);				//Option 5 -
+		else if (button == 6);				//Option 6 -
+		else if (button == 8);				//Option 7 -
 		else if (button == 9);				//Option 8 -
-		else if (button == 10);				//Option 9 - 
+		else if (button == 10);				//Option 9 -
 
 		else if (button == 3) menu(0);		//Button A - Screen 0
 		else if (button == 7) menu(1);		//Button B - Screen 1
 		else if (button == 11) menu(2);		//Button C - Screen 2
 		else if (button == 15) menu(3);		//Button D - Screen 3
 	}
-
 	else if (mode == 1) {	//Packet selection mode
 		static int limit = 0;
 		static char input[3] = {0x00, 0x00, 0x00};
@@ -275,24 +274,21 @@ void action(int button)
 				index = 0;
 			}
 		}
-		else if (mode == 3) {	//Sequence definition mode
-			if ( ( (0 <= button && button < 3) || (4 <= button && button < 7) || (8 <= button && button < 11) || button == 13) && limit < 2 )
-			{
-				choice = atoi(input);
-				mode = 4;
-				sequencer(choice, 1);//Check if sequence number exists			}
-			else {
-				action(button);
-			}
-		}
 		else if (button == 3 && slot > 0) editor(choice, --slot);					//If A pressed, move left 1
 		else if (button == 7 && slot < PLEN -1)	editor(choice, ++slot);		//If B pressed, move right 1
 		else if (button == 11) dmx.send( packets.getptr(choice) , PLEN ); //If C pressed, send packet being edited
 		else if (button == 15) { slot = 0; mode = 0; menu(0); }						//If D pressed, exit to main menu
-
 	}
-
-
+	else if (mode == 3) {	//Sequence definition mode
+		if ( ( (0 <= button && button < 3) || (4 <= button && button < 7) || (8 <= button && button < 11) || button == 13) && limit < 2 )
+		{
+			choice = atoi(input);
+			mode = 4;
+			sequencer(choice, 1);//Check if sequence number exists			}
+		else {
+			action(button);
+		}
+	}
 }
 
 int main ()
