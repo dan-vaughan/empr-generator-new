@@ -3,6 +3,7 @@
 #include <stdarg.h>
 #include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "serial-dmx.h"
 #include "pindef.h"
@@ -38,13 +39,24 @@ void DMX::init()
 	delay(1000);
 }
 
+char * DMX::pad(char * buf, int length)
+{
+	char * packet = (char *)malloc(513*sizeof(char));
+	if (packet == NULL) throw("Not enough memory");
+	memset(packet, 0, 513*sizeof(char));
+	memcpy(packet, buf, length);
+
+	return packet;
+}
 
 // PUBLIC
 void DMX::send(char * buf, int length)
 {
 	end_break();
 	delay(40);	//Precise timing to bodge the end break's high into a MAB
-	write(buf, length);
+	char * packet = pad(buf, length);
+	write(packet, 513);
+	free(packet);
 	delay(1000);
 	send_break();
 	delay(1000);

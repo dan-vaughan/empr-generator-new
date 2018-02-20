@@ -27,7 +27,7 @@ void Serial::init()
 	UART_ConfigStructInit(&cfg);
 	UART_FIFOConfigStructInit(&UARTFIFOConfigStruct);
 
-	cfg.Baud_rate = 250000;
+	//cfg.Baud_rate = 250000;
 
 	UART_Init((LPC_UART_TypeDef *)LPC_UART0, &cfg);
 	UART_FIFOConfig((LPC_UART_TypeDef *)LPC_UART0, &UARTFIFOConfigStruct);

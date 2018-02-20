@@ -4,6 +4,7 @@ class DMX
 {
 	protected:
 		void init();
+		char * pad(char * buf, int length);
 
 	public:
 		DMX();

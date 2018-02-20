@@ -5,14 +5,15 @@
 Serial pc;
 DMX dmx;
 packet_manager packets;
+sequence_manager sequences;
 AnalogIn ain;
 
 int manager = 1;
 
-char red[5] = {0x00, 0xff, 0x00, 0x10, 0x00};
+char red[5] = {0x00, 0xff, 0x00, 0x00, 0x00};
 char green[5] = {0x00, 0x00, 0xff, 0x00, 0x00};
-char blue[5] = {0x00, 0x00, 0x00, 0xf0, 0x00};
-char full[7] = {0x00, 0xff, 0xaa, 0xbb, 0xef, 0x00, 0x00};
+char blue[5] = {0x00, 0x00, 0x00, 0xff, 0x00};
+char full[4] = {0x00, 0xff, 0xff, 0xff};
 char empty[5] = {0x00, 0x00, 0x00, 0x00, 0x00};
 
 char labels[16] = {'1', '2', '3', 'A', '4', '5', '6', 'B', '7', '8', '9', 'C', '*', '0', '#', 'D'};
@@ -37,24 +38,26 @@ void menu(int screen)
 	if (screen == 0) {
 		printstr("1-Test Sequence");
 		shift_line();
-		printstr("2-Editor      B");
-		putcustom(0x20);
+		printstr("2-Packet Man.  ");
+		putcustom(0x30);
 	}
 	else if (screen == 1) {
-		printstr("3-Send Packet");
+		printstr("3-Seq. Man. ");
 		shift_line();
-		printstr("4-Sequence  C");
-		putcustom(0x20);
+		printstr("4-Music        ");
+		putcustom(0x22);
 	}
 	else if (screen == 2) {
-		printstr("5-Music Mode");
+		printstr("5-Game");
 		shift_line();
-		printstr("6-Packet Wizard");
+		printstr("6-N/A          ");
+		putcustom(0x22);
 	}
 	else if (screen == 3) {
-		printstr("--- Screen D ---");
+		printstr("7-N/A");
 		shift_line();
-		printstr("Not implemented");
+		printstr("8-N/A          ");
+		putcustom(0x12);
 	}
 
 }
@@ -66,7 +69,14 @@ void selector(int screen)
 		return_home();
 		printstr("Choose a Packet");
 		shift_line();
-		printstr("(0-99): ");
+		printstr("(0-49): ");
+	}
+	if (screen == 1) {
+		clear_display();
+		return_home();
+		printstr("Choose a Sequence");
+		shift_line();
+		printstr("(0-9): ");
 	}
 }
 
@@ -140,7 +150,44 @@ void error(int screen)
 		printstr("         (ABCD)");
 		putcustom(0x20);
 	}
+}
 
+void music() {
+	//Asher's individual project
+	int val = ain.read();
+
+	int sum = val;
+	int n = 1;
+	int max = val;
+	int min = val;
+	int avg;
+	int diff;
+	int maxdiff;
+
+	clear_display();
+	return_home();
+	printstr("Debug info");
+	shift_line();
+	printstr("on serial");
+
+	while (1) {
+		int val = ain.read();
+
+		if (val < min) min = val;
+		else if (val > max) max = val;
+		n++;
+		sum += val;
+		avg = sum/n;
+		diff = abs(val - avg);
+		if (diff > maxdiff) maxdiff = diff;
+
+		char pack[4] = {0, 0, (int)(diff/maxdiff)*255, 0};
+
+		pc.printf("Dif: %d\n\r", diff);
+		dmx.send(pack, 4);
+
+
+	}
 }
 
 void action(int button)
@@ -149,9 +196,9 @@ void action(int button)
 	static int choice = 0;	//Used to track packet being edited
 
 	if (mode == 0) {
-		if (button == 0) sequence(TIME);				//Option 1 - Test Sequence
+		if (button == 0) sequence(TIME);	//Option 1 - Test Sequence (G1)
 
-		else if (button == 1) { 					//Option 2 - selector
+		else if (button == 1) { 					//Option 2 - Packet Manager (G2)
 			if (manager == 1) {	//If sufficient memory, enter selector
 				mode = 1;
 				selector(0);
@@ -159,15 +206,24 @@ void action(int button)
 			else error(0);		//Else, give error message
 		}
 
-		else if (button == 2);												//Option 3 - Send Packet
+		else if (button == 2){						//Option 3 - Sequencer (G3)
+			if (manager == 1) {	//If sufficient memory, enter selector
+				mode = 3;
+				selector(0);
+			}
+			else error(0);		//Else, give error message
+		}
+
 		else if (button == 4);						//Option 4 - Sequence
 		else if (button == 5);						//Option 5 - Music Mode
 		else if (button == 6);						//Option 6 - Packet Wizard
+		else if (button == 8);						//Option 7 - Display full white
+		else if (button == 9);
 
-		else if (button == 3) menu(0);					//Button A - Screen 0
-		else if (button == 7) menu(1);					//Button B - Screen 1
-		else if (button == 11) menu(2);				//Button C - Screen 2
-		else if (button == 15) menu(3);				//Button D - Screen 3
+		else if (button == 3) menu(0);		//Button A - Screen 0
+		else if (button == 7) menu(1);		//Button B - Screen 1
+		else if (button == 11) menu(2);		//Button C - Screen 2
+		else if (button == 15) menu(3);		//Button D - Screen 3
 	}
 
 	else if (mode == 1) {	//Packet selection mode
@@ -186,7 +242,9 @@ void action(int button)
 				if (choice < PMAX) { mode = 2; editor(choice, 1); }	//Check if packet number exists
 				else { mode = 0; error(1); }	//Give error message
 			}
-
+		}
+		else {
+			action(button);
 		}
 	}
 	else if (mode == 2) { //Editor mode
@@ -210,8 +268,19 @@ void action(int button)
 				}
 				index = 0;
 			}
-
 		}
+		// else if (mode == 3) {	//Sequence definition mode
+		// 	if ( ( (0 <= button && button < 3) || (4 <= button && button < 7) || (8 <= button && button < 11) || button == 13) && limit < 2 )
+		// 	{
+		// 		choice = atoi(input);
+		// 		limit = 0;
+		// 		if (choice < SMAX) { mode = 2; sequencer(choice, 1); }	//Check if packet number exists
+		// 		else { mode = 0; error(4); }	//Give error message
+		// 	}
+		// 	else{
+		// 		action(button);
+		// 	}
+		// }
 		else if (button == 3 && slot > 0) editor(choice, --slot);					//If A pressed, move left 1
 		else if (button == 7 && slot < PLEN -1)	editor(choice, ++slot);		//If B pressed, move right 1
 		else if (button == 11) dmx.send( packets.getptr(choice) , PLEN ); //If C pressed, send packet being edited
@@ -226,10 +295,13 @@ int main ()
 {
 	try {
 		packets.init();
+		sequences.init();
 	}
 	catch (const char * msg) {
 		manager = 0;
 	}
+
+	pc.write("Starting...\n\r");
 
 	dmx.send(empty, 5);
 

@@ -5,6 +5,7 @@
 #include "lib/display.h"
 #include "lib/analog.h"
 #include "packet-manager.h"
+#include "sequence-manager.h"
 
 #include <stdlib.h>
 #include <stdio.h>
