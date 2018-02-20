@@ -19,7 +19,7 @@ char empty[5] = {0x00, 0x00, 0x00, 0x00, 0x00};
 
 char labels[16] = {'1', '2', '3', 'A', '4', '5', '6', 'B', '7', '8', '9', 'C', '*', '0', '#', 'D'};
 
-void sequence(int time)
+void test(int time)
 {
 
 	dmx.send(red, 5);
@@ -39,11 +39,11 @@ void menu(int screen)
 	if (screen == 0) {
 		printstr("1-Test Sequence");
 		shift_line();
-		printstr("2-Packet Man.  ");
+		printstr("2-Edit Packet   ");
 		putcustom(0x30);
 	}
 	else if (screen == 1) {
-		printstr("3-Seq. Man. ");
+		printstr("3-Edit Sequence");
 		shift_line();
 		printstr("4-Music        ");
 		putcustom(0x22);
@@ -51,7 +51,7 @@ void menu(int screen)
 	else if (screen == 2) {
 		printstr("5-Game");
 		shift_line();
-		printstr("6-N/A          ");
+		printstr("6-Send Sequence ");
 		putcustom(0x22);
 	}
 	else if (screen == 3) {
@@ -61,6 +61,15 @@ void menu(int screen)
 		putcustom(0x12);
 	}
 
+}
+
+void sequence_sender(int sequence_number){
+	int* seq_ptr = sequences.getptr(sequence_number);
+	for (int i = 0; i < 10 ; i++){
+		int packetnum = * seq_ptr;
+		dmx.send(packets.getptr(packetnum));
+		seq_ptr += sizeof(int);
+	}
 }
 
 void selector(int screen)
@@ -123,8 +132,45 @@ void editor(int packet_number, int slot)
 	cursor_shift(LEFT, len);	//Shift back so numbers can be entered
 }
 
-void sequencer(int sequence_number, int packet_number){
+void sequencer(int sequence_number, int sequence_position){
+	char msg[18];
+	char val[3];
 
+	sprintf(msg, "Slot %d:  C", slot);
+
+	clear_display();
+	return_home();
+	printstr(msg);
+
+	putcustom(0xaa);
+	printstr(" D");
+	putcustom(0x12);
+
+	shift_line();
+
+	if (sequence > 1) {
+		putcustom(0x10);
+		printchar('A');
+	}
+	else printstr("  ");
+	printstr("            ");
+
+	if (sequence_position < SLEN-1) {
+		printchar('B');
+		putcustom(0x20);
+		cursor_shift(LEFT, 9);
+	}
+	else {
+		cursor_shift(LEFT, 7);	//A lesser shift is needed as "B" not printed
+	}
+
+	//int * packet = packets.getptr(packet_number);
+
+	sprintf(val, "%d", *(num+sequence_position));
+	printstr(val);
+
+	int len = strlen(val);
+	cursor_shift(LEFT, len);	//Shift back so numbers can be entered
 }
 
 void error(int screen)
@@ -199,9 +245,9 @@ void action(int button)
 {
 	static int mode = 0;	//Menu mode, defualt
 	static int choice = 0;	//Used to track packet being edited
-
+	
 	if (mode == 0) {
-		if (button == 0) sequence(TIME);	//Option 1 - Test Sequence (G1)
+		if (button == 0) test(TIME);	//Option 1 - Test Sequence (G1)
 
 		else if (button == 1) { 			//Option 2 - Packet Manager (G2)
 			if (manager == 1) {	//If sufficient memory, enter selector
@@ -214,7 +260,7 @@ void action(int button)
 		else if (button == 2){				//Option 3 - Sequencer (G3)
 			if (seq == 1) {	//If sufficient memory, enter selector
 				mode = 3;
-				selector(0);
+				selector(1);
 			}
 			else error(0);		//Else, give error message
 		}
@@ -279,16 +325,37 @@ void action(int button)
 		else if (button == 11) dmx.send( packets.getptr(choice) , PLEN ); //If C pressed, send packet being edited
 		else if (button == 15) { slot = 0; mode = 0; menu(0); }						//If D pressed, exit to main menu
 	}
-	else if (mode == 3) {	//Sequence definition mode
-		if ( ( (0 <= button && button < 3) || (4 <= button && button < 7) || (8 <= button && button < 11) || button == 13) && limit < 2 )
-		{
-			choice = atoi(input);
-			mode = 4;
-			sequencer(choice, 1);//Check if sequence number exists			}
+	else if (mode == 3) {//Select a sequence to edit
+		if ( ( (0 <= button && button < 3) || (4 <= button && button < 7) || (8 <= button && button < 11) || button == 13) && limit < 2 ){
+			sequencer(button, 1);
+		}
 		else {
 			action(button);
 		}
-	}
+	}	//Sequence picker
+
+	else if (mode == 4) {	//Sequence definition mode
+		static int sequence_position = 1;
+		if ( ( (0 <= button && button < 3) || (4 <= button && button < 7) || (8 <= button && button < 11) || button == 13) && limit < 2 )
+		{
+			printchar(labels[button]);
+			edit_input[index] = labels[button];
+			index++;
+
+			if (index == 3) {
+				int value = atoi(edit_input);
+				if (value > PMAX) { sequence_position = 1; mode = 0; error(2); }
+				else {	//Value is safe
+					char * ptr = packets.getptr(choice)+slot;
+					*ptr = value;
+					editor(choice, slot);
+				}
+				index = 0;
+			}
+		}
+		else if (button == 3 && sequence_position > 0) sequencer(button, - sequence_position);			//If A pressed, move left 1
+		else if (button == 7 && sequence_position < SLEN -1)	sequencer(button, + sequence_position);		//If B pressed, move right 1
+		else if (button == 15) { sequence_position = 0; mode = 0; menu(0);}		}						//If D pressed, exit to main menu
 }
 
 int main ()

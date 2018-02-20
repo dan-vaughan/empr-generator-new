@@ -19,7 +19,7 @@ void sequence_manager :: init(){
 }
 
 char * sequence_manager :: getptr(int sequence_number){
-  return (char *)(sequences+sequence_number*SLEN);
+  return (int *)(sequences+sequence_number*SLEN);
 }
 
 //PRIVATE
