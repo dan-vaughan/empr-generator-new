@@ -68,13 +68,13 @@ void sequence_sender(int sequence_number){
 	int packetnum;
 	char * seq_ptr = sequences.getptr(sequence_number);
 	for (int i = 0; i < 10 ; i++){
-		packetnum = (int) * seq_ptr;
+		packetnum = (char) * seq_ptr;
 		if (packetnum == 25){
 			pc.write("25 detected!");
 		}
 		pc.write(seq_ptr);
 		pc.write("i");
-		dmx.send(packets.getptr(packetnum), PLEN);
+		dmx.send(packets.getptr((int)packetnum), PLEN);
 		seq_ptr += sizeof(char) * SLEN;
 		delay(TIME);
 	}
