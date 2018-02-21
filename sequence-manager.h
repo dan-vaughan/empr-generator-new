@@ -8,5 +8,5 @@ class sequence_manager
 	public:
 		sequence_manager();
 		void init(void);
-		char * getptr(int sequence_number);
+		int * getptr(int sequence_number);
 };
