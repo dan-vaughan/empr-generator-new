@@ -18,8 +18,8 @@ void sequence_manager :: init(){
   memset(sequences, 0, (SLEN*SMAX)+1);
 }
 
-int * sequence_manager :: getptr(int sequence_number){
-  return (int *)(sequences+sequence_number*SLEN);
+char * sequence_manager :: getptr(int sequence_number){
+  return (char *)(sequences+sequence_number*SLEN);
 }
 
 //PRIVATE
