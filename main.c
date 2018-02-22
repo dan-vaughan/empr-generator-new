@@ -64,18 +64,19 @@ void menu(int screen)
 }
 
 void sequence_sender(int sequence_number){
-	pc.write("Sending sequence...");
-	int packetnum;
-	char * seq_ptr = sequences.getptr(sequence_number);
-	for (int i = 0; i < 10 ; i++){
-		packetnum = (char) * seq_ptr;
-		if (packetnum == 25){
-			pc.write("25 detected!");
-		}
-		pc.write(seq_ptr);
-		pc.write("i");
-		dmx.send(packets.getptr((int)packetnum), PLEN);
-		seq_ptr += sizeof(char) * SLEN;
+	char val[3];
+	int i;
+	pc.write("Sending sequence...\n\r");
+	char num;
+	char * base = sequences.getptr(sequence_number);
+	char * ptr;
+	for (i = 0; i < 10; i++){
+		ptr = base + i;
+		pc.printf("base = %d, ptr = %d\n\r", base, ptr);
+		num = *ptr;
+		pc.printf("Loading packet %d...\n\r", num);
+
+		dmx.send(packets.getptr(num), PLEN);
 		delay(TIME);
 	}
 	dmx.send(empty, 5);
@@ -342,17 +343,20 @@ void action(int button)
 	}
 	else if (mode == 3) {//Select a sequence to edit
 		if ( ( (0 <= button && button < 3) || (4 <= button && button < 7) || (8 <= button && button < 11) || button == 13)){
-			int current_sequence = labels[button];
+			char buf[2] = {0x00, 0x00};
+			buf[0] = labels[button];
+			int current_sequence = atoi(buf);
+			//pc.printf("Current sequence is %d", current_sequence);
 			sequencer(current_sequence, 0);
 			mode = 4;
 		}
 		else {
 			mode = 0;
-			action(button);
+			menu(0);
 		}
 	}	//Sequence picker
 
-	else if (mode == 4) {	//Sequence definition mode
+	else if (mode == 4) {	//Sequence editor
 		static int index = 0;	//Equivelent to "limit" above
 		static char edit_input[3] = {0x00, 0x00, 0x00};
 		static int sequence_position = 0;
@@ -364,12 +368,15 @@ void action(int button)
 			edit_input[index] = labels[button];
 			index++;
 			edited = 1;
+			if (index < 2) putcustom(0x5A);	//Add a '_' character
 			if (index == 2) {
 				int value = atoi(edit_input);
-				if (value > PMAX) { sequence_position = 0; mode = 0; error(2); }
+				pc.printf("Taken %d as input\n\r", value);
+				if (value > PMAX-1) { sequence_position = 0; mode = 0; error(2); }
 				else {	//Value is safe
 					char * ptr = sequences.getptr(current_sequence)+sequence_position;
 					*ptr = value;
+					pc.printf("Stored in memory at %d we have %x\n\r", ptr, *ptr);
 					sequencer(current_sequence, sequence_position);
 				}
 				index = 0;
@@ -389,13 +396,19 @@ void action(int button)
 	}
 		else if (mode == 5) {//Select a sequence to send
 			if ( ( (0 <= button && button < 3) || (4 <= button && button < 7) || (8 <= button && button < 11) || button == 13)){
-				sequence_sender(labels[button]);
+				char buf[2] = {0x00, 0x00};
+				buf[0] = labels[button];
+				int seq = atoi(buf);
+
+				sequence_sender(seq);
+				mode = 0;
+				menu(0);
 			}
 			else {
-				action(button);
+				mode = 0;
+				menu(0);
 			}
-			mode = 0;
-			menu(0);
+
 		}	//Sequence picker
 }
 
