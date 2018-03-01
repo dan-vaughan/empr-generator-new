@@ -6,10 +6,13 @@
 #include "lib/analog.h"
 #include "packet-manager.h"
 #include "sequence-manager.h"
+#include "queue.h"
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <math.h>
 
 extern I2C i2c;
 extern Serial pc;
+extern AnalogIn ain;

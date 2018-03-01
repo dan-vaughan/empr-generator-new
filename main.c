@@ -223,12 +223,15 @@ void music() {
 	int avg;
 	int diff;
 	int maxdiff;
+	int intensity;
 
 	clear_display();
 	return_home();
 	printstr("Debug info");
 	shift_line();
 	printstr("on serial");
+
+	Queue history(ain.read());
 
 	while (1) {
 		int val = ain.read();
@@ -241,9 +244,15 @@ void music() {
 		diff = abs(val - avg);
 		if (diff > maxdiff) maxdiff = diff;
 
-		char pack[4] = {0, 0, (int)(diff/maxdiff)*255, 0};
+		history.add(diff);
 
-		pc.printf("Dif: %d\n\r", diff);
+		intensity = (int)pow(history.avg(), 2)/10240-100;
+		if (intensity > 255) intensity = 255;
+		if (intensity < 0) intensity = 0;
+
+		char pack[4] = {0, 0, intensity, 0};
+
+		pc.printf("Dif: %d Sending packet with intensity %d\n\r", diff, intensity);
 		dmx.send(pack, 4);
 	}
 }
