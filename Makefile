@@ -49,7 +49,8 @@ LDFLAGS+=-L$(CMSIS)/lib -lDriversLPC17xxgnu
 EXECNAME	= bin/generator
 
 # Source files provided by the user to build the project
-OBJ 	= queue.o main.o packet-manager.o sequence-manager.o lib/serial.o lib/pindef.o lib/i2c.o lib/serial-dmx.o lib/utilities.o lib/keypad.o lib/display.o lib/analog.o
+
+OBJ 	= game.o queue.o main.o packet-manager.o sequence-manager.o lib/serial.o lib/pindef.o lib/i2c.o lib/serial-dmx.o lib/utilities.o lib/keypad.o lib/display.o lib/analog.o
 
 # Commands handled by this makefile
 all: 	build

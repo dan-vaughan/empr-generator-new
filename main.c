@@ -16,6 +16,9 @@ char green[5] = {0x00, 0x00, 0xff, 0x00, 0x00};
 char blue[5] = {0x00, 0x00, 0x00, 0xff, 0x00};
 char full[4] = {0x00, 0xff, 0xff, 0xff};
 char empty[5] = {0x00, 0x00, 0x00, 0x00, 0x00};
+char yellow[5] = {0x00, 0xff, 0xff, 0x00, 0x00};
+char magenta[5] = {0x00, 0xff, 0x00, 0xff, 0x00};
+char cyan[5] = {0x00, 0x00, 0xff, 0xff, 0x00};
 
 char labels[16] = {'1', '2', '3', 'A', '4', '5', '6', 'B', '7', '8', '9', 'C', '*', '0', '#', 'D'};
 
@@ -284,7 +287,7 @@ void action(int button)
 
 		else if (button == 4) { selector(1); mode = 5; }				//Option 4 - Send Sequence (G3)
 		else if (button == 5) music();//Option 5 - Music (IC5)
-		else if (button == 6);				//Option 6 - Game (IC3)
+		else if (button == 6) game_start();				//Option 6 - Game (IC4)
 		else if (button == 8);				//Option 7 -
 		else if (button == 9);				//Option 8 -
 		else if (button == 10);				//Option 9 -
