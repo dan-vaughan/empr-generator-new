@@ -19,6 +19,14 @@ char empty[5] = {0x00, 0x00, 0x00, 0x00, 0x00};
 char yellow[5] = {0x00, 0xff, 0xff, 0x00, 0x00};
 char magenta[5] = {0x00, 0xff, 0x00, 0xff, 0x00};
 char cyan[5] = {0x00, 0x00, 0xff, 0xff, 0x00};
+char yellowgreen[5] = {0x00, 0x80, 0xff, 0x00, 0x00};
+char orange[5] = {0x00, 0xff, 0x80, 0x00, 0x00};
+char rose[5] = {0x00, 0xff, 0x00, 0x80, 0x00};
+char violet[5] = {0x00, 0x80, 0x00, 0xff, 0x00};
+char azure[5] = {0x00, 0x00, 0x80, 0xff, 0x00};
+char seagreen[5] = {0x00, 0x00, 0xff, 0x80, 0x00};
+
+char * colours[6] = {red, green, blue, yellow, magenta, cyan};
 
 char labels[16] = {'1', '2', '3', 'A', '4', '5', '6', 'B', '7', '8', '9', 'C', '*', '0', '#', 'D'};
 
@@ -227,6 +235,10 @@ void music() {
 	int diff;
 	int maxdiff;
 	int intensity;
+	int previous;		//Track previous intensity
+	char * old; 				//Tracks the current colour to ensure a new colour is chosen
+
+	char * pack = colours[rand() % 6];
 
 	clear_display();
 	return_home();
@@ -235,6 +247,9 @@ void music() {
 	printstr("on serial");
 
 	Queue history(ain.read());
+
+	int seed = ain.read();
+	srand(seed);
 
 	while (1) {
 		int val = ain.read();
@@ -249,14 +264,22 @@ void music() {
 
 		history.add(diff);
 
-		intensity = (int)pow(history.avg(), 2)/10240-100;
+		intensity = (int)pow(history.avg(), 2)/10240-00;	//50 is a good threshold for speech. 0 is better if lab is quiet and inconspicuous noises are needed.
 		if (intensity > 255) intensity = 255;
 		if (intensity < 0) intensity = 0;
 
-		char pack[4] = {0, 0, intensity, 0};
+		if (intensity >= 10 && previous < 10) {	//Values for a quiet lab. Will need adjustment for music.
+			pc.printf("CHANGING COLOUR\n\r");
+			old = pack;
+			while (old == pack) {
+				pack = colours[rand() % 6];
+			}
+		}
 
-		pc.printf("Dif: %d Sending packet with intensity %d\n\r", diff, intensity);
+		pc.printf("Intensity %d Sending %x %x %x Previous %d\n\r", intensity, pack[1], pack[2], pack[3], previous);
 		dmx.send(pack, 4);
+
+		previous = intensity;
 	}
 }
 

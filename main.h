@@ -14,6 +14,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
+#include <time.h>
 
 extern I2C i2c;
 extern Serial pc;
@@ -27,4 +28,3 @@ extern char green[5];
 extern char blue[5];
 extern char empty[5];
 extern char yellow[5];
-
