@@ -1,4 +1,4 @@
-#define SIZE 5
+#define SIZE 15
 
 class Queue
 {

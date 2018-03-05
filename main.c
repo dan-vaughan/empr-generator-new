@@ -235,10 +235,13 @@ void music() {
 	int diff;
 	int maxdiff;
 	int intensity;
-	int previous;		//Track previous intensity
+	int strength;
+	int previous;		//Track previous strength
 	char * old; 				//Tracks the current colour to ensure a new colour is chosen
+	int recent = 0;
 
 	char * pack = colours[rand() % 6];
+	char mypack[5] = {0x00, 0x00, 0x00, 0x00, 0x00};
 
 	clear_display();
 	return_home();
@@ -246,14 +249,13 @@ void music() {
 	shift_line();
 	printstr("on serial");
 
-	Queue history(ain.read());
+	Queue history(ain.read());	//recent measurements to detect sudden changes
 
 	int seed = ain.read();
 	srand(seed);
 
 	while (1) {
 		int val = ain.read();
-
 		if (val < min) min = val;
 		else if (val > max) max = val;
 		n++;
@@ -264,21 +266,26 @@ void music() {
 
 		history.add(diff);
 
-		intensity = (int)pow(history.avg(), 2)/10240-00;	//50 is a good threshold for speech. 0 is better if lab is quiet and inconspicuous noises are needed.
+		intensity = pow(history.avg()/64, 2)-3;	//50 is a good threshold for speech. 0 is better if lab is quiet and inconspicuous noises are needed.
+
 		if (intensity > 255) intensity = 255;
 		if (intensity < 0) intensity = 0;
 
-		if (intensity >= 10 && previous < 10) {	//Values for a quiet lab. Will need adjustment for music.
-			pc.printf("CHANGING COLOUR\n\r");
+		pc.printf("%d\n\r", intensity);
+
+
+		if (intensity - previous > 20 && recent == 0) {			//intensity >= 150 && previous < 150) {	//Values for a quiet lab. Will need adjustment for music.
 			old = pack;
 			while (old == pack) {
 				pack = colours[rand() % 6];
 			}
+			recent = 5;
 		}
-
-		pc.printf("Intensity %d Sending %x %x %x Previous %d\n\r", intensity, pack[1], pack[2], pack[3], previous);
-		dmx.send(pack, 4);
-
+		else if (recent > 0) recent--;
+		for (int i = 1; i < 4; i++) {	//Apply intensity values to each
+			mypack[i] = floor(pack[i] * intensity/255);
+		}
+		dmx.send(mypack, 4);
 		previous = intensity;
 	}
 }
