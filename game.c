@@ -1,9 +1,4 @@
-#include "game.h"
 #include "main.h"
-
-#define TIME 10000000
-
-static int input;
 
 void display_options(int option){
   if (option == 0){
@@ -39,74 +34,96 @@ void display_options(int option){
     return_home();
     printstr("Get ready!");
   }
-}
-
-void game_action(int button){
-  input = labels[button];
-}
-
-int pseudo_random(int range){
-  int val = ain.read();
-  return val % range;
-}
-
-void send_game_sequence(int * colour_sequence, int i){
-  for (int j = 0; j <= i; j++){
-    if(colour_sequence[j] == 1){
-      dmx.send(red, 5);
-    }
-    if(colour_sequence[j] == 2){
-      dmx.send(green, 5);
-    }
-    if(colour_sequence[j] == 3){
-      dmx.send(blue, 5);
-    }
-    if(colour_sequence[j] == 4){
-      dmx.send(yellow, 5);
-    }
-    delay(TIME);
-    dmx.send(empty, 5);
+  if (option == 5){
+    clear_display();
+    return_home();
+    printstr("Congratulations!");
+    shift_line();
+    printstr("Play again soon?");
   }
 }
 
 
+void game_action(int button){
+  my_game.edit_user_sequence(button);
+  buzzer(button + 1);
+  if (button == 0){
+    printstr("R");
+  }
+  if (button == 1){
+    printstr("G");
+  }
+  if (button == 2){
+    printstr("B");
+  }
+  if (button == 3){
+    printstr("C");
+  }
+  if (button == 4){
+    printstr("M");
+  }
+  if (button == 5){
+    printstr("Y");
+  }
+}
 
-void game_start(){
+void level_start(int colour_index){
+
+  clear_display();
+  return_home();
+  putcustom(colour_index + 177);
+  printstr(" colours. Play!");
+  return_home();
+  shift_line();
+  for (int i = 0; i <= colour_index; i++){
+    putcustom(90);
+  }
+  return_home();
+  shift_line();
+}
+
+void buzzer(int tone_factor){
+  for (int buzz = 0; buzz < 200 / tone_factor; buzz++) {
+    aout.write(60000);
+    delay(2500 * tone_factor);
+    aout.write(0);
+  }
+}
+
+void difficulty_display(){
+  clear_display();
+  return_home();
+  printstr("Difficulty (1-5)");
+  shift_line();
+  putcustom(90);
+}
+
+void game_start(int difficulty){
+  my_game.set_sequence(difficulty);
   display_options(3);
   delay(TIME);
-  int i = 0;
-  int failed = 0;
-  int colour_index;
-  int * colour_sequence = (int*)malloc(sizeof(int));
-  int * user_sequence = (int*)malloc(sizeof(int));
-  colour_sequence[0] = pseudo_random(4) + 1;
-  while(!failed){
+  int failed;
+  for(int colour_index = 0; colour_index < 10; colour_index++){
     display_options(4);
     delay(TIME);
-    send_game_sequence(colour_sequence, i);
-    display_options(0);
-
-    for (colour_index = 0; colour_index <= i; colour_index++){
+    my_game.send_sequence();
+    level_start(colour_index);
+    while (!my_game.check_flag()) {
       keypad_check(game_action);
-      user_sequence[colour_index] = input;
-      //send tone to speaker
     }
-
-    for (colour_index = 0; colour_index <= i; colour_index++){
-        if (colour_sequence[colour_index] != user_sequence[colour_index]){
-          failed = 1;
-        }
-    }
-    if (failed) {
+    failed = my_game.test_sequence();
+    delay(TIME);
+    if (failed){
       display_options(2);
+      delay(TIME);
+      break;
     }
-    else{
+    if (!failed && colour_index < 9) {
       display_options(1);
     }
+    if (!failed && colour_index == 9) {
+      display_options(5);
+    }
     delay(TIME);
-    i += 1;
-    int * colour_sequence = (int *)realloc(colour_sequence, sizeof(int) * (i + 1));
-    int * user_sequence = (int *)realloc(colour_sequence, sizeof(int) * (i + 1));
-    colour_sequence[i] = pseudo_random(4) + 1;
   }
 }

@@ -50,7 +50,7 @@ EXECNAME	= bin/generator
 
 # Source files provided by the user to build the project
 
-OBJ 	= game.o queue.o main.o packet-manager.o sequence-manager.o lib/serial.o lib/pindef.o lib/i2c.o lib/serial-dmx.o lib/utilities.o lib/keypad.o lib/display.o lib/analog.o
+OBJ 	= game.o game_class.o queue.o main.o music.o packet-manager.o sequence-manager.o lib/serial.o lib/pindef.o lib/i2c.o lib/serial-dmx.o lib/utilities.o lib/keypad.o lib/display.o lib/analog.o
 
 # Commands handled by this makefile
 all: 	build

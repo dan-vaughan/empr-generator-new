@@ -1,15 +1,17 @@
 #include "main.h"
 
-#define TIME 10000000
-
 Serial pc;
 DMX dmx;
 packet_manager packets;
 sequence_manager sequences;
 AnalogIn ain;
+AnalogOut aout;
+GAME my_game;
 
 int manager = 1;
 int seq = 1;
+
+void (*repeat)();
 
 char red[5] = {0x00, 0xff, 0x00, 0x00, 0x00};
 char green[5] = {0x00, 0x00, 0xff, 0x00, 0x00};
@@ -29,6 +31,8 @@ char seagreen[5] = {0x00, 0x00, 0xff, 0x80, 0x00};
 char * colours[6] = {red, green, blue, yellow, magenta, cyan};
 
 char labels[16] = {'1', '2', '3', 'A', '4', '5', '6', 'B', '7', '8', '9', 'C', '*', '0', '#', 'D'};
+
+void do_nothing() { }
 
 void test()
 {
@@ -71,7 +75,6 @@ void menu(int screen)
 		shift_line();
 		printstr("8-N/A");
 	}
-
 }
 
 void sequence_sender(int sequence_number){
@@ -223,73 +226,6 @@ void error(int screen)
 	}
 }
 
-void music() {
-	//Asher's individual project
-	int val = ain.read();
-
-	int sum = val;
-	int n = 1;
-	int max = val;
-	int min = val;
-	int avg;
-	int diff;
-	int maxdiff;
-	int intensity;
-	int strength;
-	int previous;		//Track previous strength
-	char * old; 				//Tracks the current colour to ensure a new colour is chosen
-	int recent = 0;
-
-	char * pack = colours[rand() % 6];
-	char mypack[5] = {0x00, 0x00, 0x00, 0x00, 0x00};
-
-	clear_display();
-	return_home();
-	printstr("Debug info");
-	shift_line();
-	printstr("on serial");
-
-	Queue history(ain.read());	//recent measurements to detect sudden changes
-
-	int seed = ain.read();
-	srand(seed);
-
-	while (1) {
-		int val = ain.read();
-		if (val < min) min = val;
-		else if (val > max) max = val;
-		n++;
-		sum += val;
-		avg = sum/n;
-		diff = abs(val - avg);
-		if (diff > maxdiff) maxdiff = diff;
-
-		history.add(diff);
-
-		intensity = pow(history.avg()/64, 2)-3;	//50 is a good threshold for speech. 0 is better if lab is quiet and inconspicuous noises are needed.
-
-		if (intensity > 255) intensity = 255;
-		if (intensity < 0) intensity = 0;
-
-		pc.printf("%d\n\r", intensity);
-
-
-		if (intensity - previous > 20 && recent == 0) {			//intensity >= 150 && previous < 150) {	//Values for a quiet lab. Will need adjustment for music.
-			old = pack;
-			while (old == pack) {
-				pack = colours[rand() % 6];
-			}
-			recent = 5;
-		}
-		else if (recent > 0) recent--;
-		for (int i = 1; i < 4; i++) {	//Apply intensity values to each
-			mypack[i] = floor(pack[i] * intensity/255);
-		}
-		dmx.send(mypack, 4);
-		previous = intensity;
-	}
-}
-
 void action(int button)
 {
 	static int mode = 0;	//Menu mode, defualt
@@ -316,8 +252,8 @@ void action(int button)
 		}
 
 		else if (button == 4) { selector(1); mode = 5; }				//Option 4 - Send Sequence (G3)
-		else if (button == 5) music();//Option 5 - Music (IC5)
-		else if (button == 6) game_start();				//Option 6 - Game (IC4)
+		else if (button == 5) { mode = 6; repeat = music_repeat; music_start(); }			//Option 5 - Music (IC5)
+		else if (button == 6) { mode = 7; difficulty_display(); }					//Option 6 - Game (IC4)
 		else if (button == 8);				//Option 7 -
 		else if (button == 9);				//Option 8 -
 		else if (button == 10);				//Option 9 -
@@ -450,8 +386,23 @@ void action(int button)
 				mode = 0;
 				menu(0);
 			}
-
 		}	//Sequence picker
+		else if (mode == 6) {	//Music mode - hook into Asher's individual project
+			if (button == 15) { mode = 0; repeat = do_nothing; menu(0); }	//If D pressed, exit to main Menu
+			else music_button(button);	//Call the button hook in Asher's individual project
+		}
+	else if (mode == 7){
+		if (0 <= button && button < 3){
+			game_start(button);
+		}
+		else if (button == 4 || button == 5){
+			game_start(button - 1);
+		}
+		else if (button != 6) {
+			mode = 0;
+			menu(0);
+		}
+	}
 }
 
 int main ()
@@ -463,10 +414,12 @@ int main ()
 		manager = 0;
 	}
 
+	repeat = do_nothing;	//This is a hook for a repeating action. By default it does nothing.
+
 	try {
 		sequences.init();
 	}
-	catch (const char * msh){
+	catch (const char * msg){
 		seq = 0;
 	}
 
@@ -481,5 +434,6 @@ int main ()
 	while (1)
 	{
 		keypad_check(action);
+		(*repeat)();
 	}
 }
