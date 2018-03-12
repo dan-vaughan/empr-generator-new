@@ -27,3 +27,21 @@ int Queue::avg()
 
   return sum/SIZE;
 }
+
+int Queue::min()
+{
+  int min = queue[0];
+  for (int i = 1; i < SIZE; i++) {
+    if (queue[i] < min) min = queue[i];
+  }
+  return min;
+}
+
+int Queue::max()
+{
+  int max = queue[0];
+  for (int i = 1; i < SIZE; i++) {
+    if (queue[i] > max) max = queue[i];
+  }
+  return max;
+}

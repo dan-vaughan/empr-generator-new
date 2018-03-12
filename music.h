@@ -3,4 +3,4 @@ void music_start();
 void volume();
 void rhythm();
 void music_repeat();
-float getvol();
+int getvol();

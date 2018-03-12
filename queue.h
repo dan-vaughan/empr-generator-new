@@ -1,4 +1,4 @@
-#define SIZE 15
+#define SIZE 10
 
 class Queue
 {
@@ -9,4 +9,6 @@ class Queue
 		Queue(int initial);
     void add(int val);
 		int avg();
+		int min();
+		int max();
 };

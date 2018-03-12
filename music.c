@@ -9,7 +9,7 @@ char volblue = 0x00;
 
 int transition = 0;	// 0 = Red -> Green, 1 = Green -> Blue, 2 = Blue -> Red
 
-Queue history(0);	//Used to 'smooth' out volumes to get an average
+Queue history((int) ain.read());	//Used to 'smooth' out volumes to get an average
 
 void music_menu(int screen)
 {
@@ -84,17 +84,20 @@ void volume() {
 			if (volblue == 0) transition = 0;
 			break;
 	}
-	float vol = getvol();
+	int vol = getvol();
 
 	smooth[1] = (char)volred * vol;
 	smooth[2] = (char)volgreen * vol;
 	smooth[3] = (char)volblue * vol;
+
+	pc.printf("RGB: %d %d %d vol: %d\n\r", smooth[1], smooth[2], smooth[3], vol);
 
 	dmx.send(smooth, 5);
 }
 
 void rhythm() {
 	dmx.send(yellow, 5);
+	getvol();
 }
 
 int maximum(int a, int b) {
@@ -103,8 +106,19 @@ int maximum(int a, int b) {
 
 }
 
-float getvol() {
-	static int max = 0;
+
+
+int getvol() {
+	history.add((int) ain.read());
+	int mymin = history.min();
+	int mymax = history.max();
+	int diff = ((mymax - mymin) >> 8) - 2;
+	//pc.printf("Amp %d\n\r", diff >> 8);
+	if (diff < 0) diff = 0;
+	if (diff > 16) diff = 16;
+
+	return diff;
+	/*static int max = 0;
 
 	int val = ain.read();
 	history.add(val);
@@ -118,7 +132,7 @@ float getvol() {
 
 	pc.printf("avg %d cor %d\n\r", avg, cor);
 
-	return cor;
+	return cor;*/
 }
 
 /*void music() {
