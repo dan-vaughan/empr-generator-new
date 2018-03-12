@@ -1,4 +1,5 @@
-#define SIZE 10
+//Asher's IC
+#define SIZE 15
 
 class Queue
 {

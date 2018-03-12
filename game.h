@@ -1,3 +1,4 @@
+//Daniel's IC
 void display_options(int option);
 void game_action(int button);
 void game_start(int difficulty);

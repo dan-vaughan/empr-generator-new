@@ -1,6 +1,6 @@
+//Asher's IC
 #include "main.h"
 
-//PART OF ASHER'S INDIVIDUAL COMPONENT
 
 //CONSTRUCTOR
 Queue::Queue(int initial)
