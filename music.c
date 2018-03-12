@@ -113,7 +113,7 @@ void volume() {
 	dmx.send(smooth, 5);
 }
 
-void change() {
+void change() {	//Change to a random colour which is not adjacent on the colour wheel
 	char rhtpack[5] = {0x00, 0x00, 0x00, 0x00, 0x00};
 	int rnd = rand() % 3;
 
@@ -214,7 +214,6 @@ void change() {
 		}
 	}
 
-
 	rhtpack[1] = rhtred;
 	rhtpack[2] = rhtgreen;
 	rhtpack[3] = rhtblue;
@@ -224,8 +223,11 @@ void change() {
 void rhythm() {
 	int vol = getvol();
 	static int prev = vol;
-	if (vol-prev > 1) change();
-	//else dmx.send(empty, 5);
+	static int recent = 0;	//Tracks if light has recently changed
+
+	if (vol-prev > 1 && recent == 0) { change(); recent = 600; }
+	else if (recent > 0) recent--;
+
 	prev = vol;
 }
 
