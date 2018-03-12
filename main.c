@@ -398,10 +398,8 @@ void action(int button)
 		else if (button == 4 || button == 5){
 			game_start(button - 1);
 		}
-		else if (button != 6) {
-			mode = 0;
-			menu(0);
-		}
+		mode = 0;
+		menu(0);
 	}
 }
 

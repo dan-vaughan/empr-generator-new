@@ -84,7 +84,7 @@ void level_start(int colour_index){
 
 void buzzer(int tone_factor){
   for (int buzz = 0; buzz < 200 / tone_factor; buzz++) {
-    aout.write(60000);
+    aout.write(5000);
     delay(2500 * tone_factor);
     aout.write(0);
   }
