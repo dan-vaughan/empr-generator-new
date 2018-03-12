@@ -8,6 +8,10 @@ char volred = 0x16;
 char volgreen = 0x00;
 char volblue = 0x00;
 
+char rhtred = 0;
+char rhtgreen = 0;
+char rhtblue = 0;
+
 int transition = 0;	// 0 = Red -> Green, 1 = Green -> Blue, 2 = Blue -> Red
 
 Queue history((int) ain.read());	//Used to 'smooth' out volumes to get an average
@@ -63,6 +67,19 @@ void music_repeat() {
 
 void music_start() {  //Called when music mode starts
   music_menu(0);
+	srand(ain.read());
+	int rnd = rand() % 3;
+	switch(rnd) {
+		case 0:
+			rhtred = 255;
+			break;
+		case 1:
+			rhtgreen = 255;
+			break;
+		case 2:
+			rhtblue = 255;
+			break;
+	}
 }
 
 void volume() {
@@ -96,9 +113,120 @@ void volume() {
 	dmx.send(smooth, 5);
 }
 
+void change() {
+	char rhtpack[5] = {0x00, 0x00, 0x00, 0x00, 0x00};
+	int rnd = rand() % 3;
+
+	if (rhtred == 255) {	//Red
+		rhtred = 0;
+		switch(rnd) {
+			case 0:
+				rhtgreen = 255;
+				break;
+			case 1:
+				rhtblue = 255;
+				break;
+			case 2:
+				rhtgreen = 128;
+				rhtblue = 128;
+				break;
+		}
+	}
+	else if (rhtgreen == 255) {	//Green
+		rhtgreen = 0;
+		switch(rnd) {
+			case 0:
+				rhtred = 255;
+				break;
+			case 1:
+				rhtblue = 255;
+				break;
+			case 2:
+				rhtred = 128;
+				rhtblue = 128;
+				break;
+		}
+	}
+	else if (rhtblue == 255) {	//Blue
+		rhtblue = 0;
+		switch(rnd) {
+			case 0:
+				rhtred = 255;
+				break;
+			case 1:
+				rhtgreen = 255;
+				break;
+			case 2:
+				rhtred = 128;
+				rhtgreen = 128;
+				break;
+		}
+	}
+	else if (rhtred == 128 && rhtgreen == 128) {	//Yellow
+		switch(rnd) {
+			case 0:
+				rhtred = 0;
+				rhtgreen = 0;
+				rhtblue = 255;
+				break;
+			case 1:
+				rhtred = 0;
+				rhtblue = 128;
+				break;
+			case 2:
+				rhtgreen = 0;
+				rhtblue = 128;
+				break;
+		}
+	}
+	else if (rhtred == 128 && rhtblue == 128) {	//Magenta
+		switch(rnd) {
+			case 0:
+				rhtred = 0;
+				rhtgreen = 255;
+				rhtblue = 0;
+				break;
+			case 1:
+				rhtred = 0;
+				rhtgreen = 128;
+				break;
+			case 2:
+				rhtgreen = 128;
+				rhtblue = 0;
+				break;
+		}
+	}
+	else if (rhtgreen == 128 && rhtblue == 128) {	//Cyan
+		switch(rnd) {
+			case 0:
+				rhtred = 255;
+				rhtgreen = 0;
+				rhtblue = 0;
+				break;
+			case 1:
+				rhtred = 128;
+				rhtgreen = 0;
+				break;
+			case 2:
+				rhtred = 128;
+				rhtblue = 0;
+				break;
+		}
+	}
+
+
+	rhtpack[1] = rhtred;
+	rhtpack[2] = rhtgreen;
+	rhtpack[3] = rhtblue;
+	dmx.send(rhtpack, 5);
+}
+
 void rhythm() {
-	dmx.send(yellow, 5);
-	getvol();
+	int vol = getvol();
+	static int prev = vol;
+	if (vol-prev > 1) change();
+	//else dmx.send(empty, 5);
+	prev = vol;
 }
 
 int maximum(int a, int b) {
