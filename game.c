@@ -69,10 +69,14 @@ void game_action(int button){
 }
 
 void level_start(int colour_index){
-
   clear_display();
   return_home();
-  putcustom(colour_index + 177);
+  if (colour_index == 9){
+    putcustom(colour_index + 177);
+  }
+  else{
+    printstr("10");
+  }
   printstr(" colours. Play!");
   return_home();
   shift_line();
