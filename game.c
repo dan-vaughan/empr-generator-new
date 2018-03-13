@@ -71,13 +71,13 @@ void game_action(int button){
 void level_start(int colour_index){
   clear_display();
   return_home();
-  if (colour_index == 9){
+  if (colour_index < 9){
     putcustom(colour_index + 177);
   }
   else{
     printstr("10");
   }
-  printstr(" colours. Play!");
+  printstr(" colours - go!");
   return_home();
   shift_line();
   for (int i = 0; i <= colour_index; i++){
@@ -89,7 +89,7 @@ void level_start(int colour_index){
 
 void buzzer(int tone_factor){
   for (int buzz = 0; buzz < 200 / tone_factor; buzz++) {
-    aout.write(1000);
+    aout.write(50);
     delay(2500 * tone_factor);
     aout.write(0);
   }

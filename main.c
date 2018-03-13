@@ -80,7 +80,9 @@ void menu(int screen)
 void sequence_sender(int sequence_number){
 	char val[3];
 	int i;
-	pc.write("Sending sequence...\n\r");
+	clear_display();
+	return_home();
+	printstr("Sending sequence...");
 	char num;
 	char * base = sequences.getptr(sequence_number);
 	char * ptr;
