@@ -10,4 +10,6 @@ class Queue
 		Queue(int initial);
     void add(int val);
 		int avg();
+		int min();
+		int max();
 };
